@@ -29,6 +29,24 @@ color_light_ground = libtcod.Color(200, 180, 50)
 logger = Logger()
 
 
+def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
+    # render a bar (HP, experience, etc). first calculate the width of the bar
+    bar_width = int(float(value) / maximum * total_width)
+    # render the background first
+    libtcod.console_set_default_background(panel, back_color)
+    libtcod.console_rect(panel, x, y, total_width, 1, False, libtcod.BKGND_SCREEN)
+
+    # now render the bar on top
+    libtcod.console_set_default_background(panel, bar_color)
+    if bar_width > 0:
+        libtcod.console_rect(panel, x, y, bar_width, 1, False, libtcod.BKGND_SCREEN)
+
+    # finally, some centered text with the values
+    libtcod.console_set_default_foreground(panel, libtcod.white)
+    libtcod.console_print_ex(panel, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER,
+                             name + ': ' + str(value) + '/' + str(maximum))
+
+
 def inventory_menu(header, active, con, player):
     # show a menu with each item of the inventory as an option
     if len(player.inventory) == 0:
@@ -62,7 +80,7 @@ class Game:
         self.player.set(hp=100, defense=1, power=4, xp=0)
         self.initialize()
         self.player.objects = self.objects
-        self.get_player_dagger()
+        self.give_dagger_to_player()
 
     def initialize(self):
         self.map = Map(self.map_height, self.map_width)
@@ -83,7 +101,7 @@ class Game:
         self.objects.append(self.stairs)
         self.stairs.send_to_back()
 
-    def get_player_dagger(self):
+    def give_dagger_to_player(self):
         dagger = Equipment(0, 0, '-', 'dagger', libtcod.sky, objects=self.objects, logger=logger)
         dagger.set(slot='right hand', power_bonus=2)
         dagger.set_owner(self.player)
@@ -281,22 +299,6 @@ class Game:
         logger.message(mes, libtcod.red)
         self.initialize()
 
-    def render_bar(self, x, y, total_width, name, value, maximum, bar_color, back_color):
-        # render a bar (HP, experience, etc). first calculate the width of the bar
-        bar_width = int(float(value) / maximum * total_width)
-        # render the background first
-        libtcod.console_set_default_background(panel, back_color)
-        libtcod.console_rect(panel, x, y, total_width, 1, False, libtcod.BKGND_SCREEN)
-
-        # now render the bar on top
-        libtcod.console_set_default_background(panel, bar_color)
-        if bar_width > 0:
-            libtcod.console_rect(panel, x, y, bar_width, 1, False, libtcod.BKGND_SCREEN)
-
-        # finally, some centered text with the values
-        libtcod.console_set_default_foreground(panel, libtcod.white)
-        libtcod.console_print_ex(panel, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER,
-                                 name + ': ' + str(value) + '/' + str(maximum))
 
 
     def render_all(self):
@@ -346,7 +348,7 @@ class Game:
             y += 1
 
         # show the player's stats
-        self.render_bar(1, 1, BAR_WIDTH, 'HP', self.player.hp, self.player.max_hp,
+        render_bar(1, 1, BAR_WIDTH, 'HP', self.player.hp, self.player.max_hp,
                    libtcod.light_red, libtcod.darker_red)
         libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT, 'Dungeon level ' + str(self.dungeon_level))
 

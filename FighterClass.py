@@ -134,7 +134,6 @@ class Monster(Fighter):
 
     def take_turn(self, target, map):
         if libtcod.map_is_in_fov(map.fov_map, self.x, self.y):
-            print 'AAAA '
             if self.distance_to(target) >= 2:
                 self.move_towards(target, map)
             elif target.hp > 0:
